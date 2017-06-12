@@ -2,7 +2,11 @@
 from Tkinter import *
 import tkFileDialog
 import pandas as pd
+import numpy as np
 import tkMessageBox
+import math
+
+from scipy.stats import mode
 
 class NaiveBayesClassifier:
     def __init__(self, master):
@@ -16,8 +20,8 @@ class NaiveBayesClassifier:
         self.labelErr = Label(master, text="")
         self.train = None
         self.test = None
-        self.structureArr = [[]]
-        self.structureFile = []
+        self.structureArr = []
+        self.structureFile = None
 
         # init buttons, labels and entries
         self.labelPath = Label(master, text="Directory Path:")
@@ -75,17 +79,22 @@ class NaiveBayesClassifier:
 
             # load train file, test file and structure file
 
-            # self.structureFile = pd.read_csv("C:\Users\Keren\Desktop\amp\Structure.txt")
+            # self.structureFile = pd.read_csv(self.entryPath.get() + "/Structure.txt")
+            # print self.structureFile
 
             self.structureFile = open(self.entryPath.get() + "/Structure.txt")
-            lines = self.structureFile.readlines()
+            lines = self.structureFile.read().splitlines()
             for line in lines:
                 self.structureArr.append(line.split(" "))
-            print self.structureArr
-
             self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
-
+            self.fillMissingValues()
+            self.discretize()
             tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
+
+    def discretize(self):
+        for arr in self.structureArr:
+            if arr[2] == "NUMERIC":
+                self.train[arr[1]+"_Bin"] = self.binning(self.train[arr[1]])
 
     def validate(self, new_text):
         if not new_text:  # the field is being cleared
@@ -97,6 +106,35 @@ class NaiveBayesClassifier:
             return True
         except ValueError:
             self.labelErr['text'] = "Invalid input - Please enter a number"
+
+    def fillMissingValues(self):
+        for arr in self.structureArr:
+            if arr[2] == "NUMERIC":
+                self.train[arr[1]].fillna(self.train[arr[1]].mean(), inplace=True)
+            elif arr[1] != "class":
+                self.train[arr[1]].fillna(self.train[arr[1]].mode()[0], inplace=True)
+
+    def binning(self, col):
+
+        # Define min and max values
+        minval = col.min()
+        maxval = col.max()
+
+        # cut_points = np.histogram(col, bins=self.numOfBins, range=None, normed=False, weights=None, new=None)
+        interval = float(maxval - minval) / float(self.numOfBins)
+        tmpInterval = float(interval + minval)
+        cut_points = []
+        while tmpInterval < maxval:
+            cut_points.append(tmpInterval)
+            tmpInterval = interval + tmpInterval
+
+        # create list by adding min and max to cut_points
+        break_points = [minval] + cut_points + [maxval]
+        # if no labels provided, use default labels 0 ... (n-1)
+        labels = range(len(cut_points)+1)
+        # Binning using cut function of pandas
+        colBin = pd.cut(col, bins=break_points, labels=labels, include_lowest=True)
+        return colBin
 
     def classify(self):
         self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
