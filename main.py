@@ -5,23 +5,27 @@ import pandas as pd
 import numpy as np
 import tkMessageBox
 import math
+import Classifier
 
 from scipy.stats import mode
 
 class NaiveBayesClassifier:
+
+    # data members
+    master = None
+    filePath = ""
+    numOfBins = 0
+    train = None
+    test = None
+    structureArr = []
+    structureFile = None
+    classifier = None
+
     def __init__(self, master):
+
         self.master = master
         master.title("Naive Bayes Classifier")
         master.geometry("500x300")
-
-        # data members
-        self.filePath = ""
-        self.numOfBins = 0
-        self.labelErr = Label(master, text="")
-        self.train = None
-        self.test = None
-        self.structureArr = []
-        self.structureFile = None
 
         # init buttons, labels and entries
         self.labelPath = Label(master, text="Directory Path:")
@@ -35,6 +39,7 @@ class NaiveBayesClassifier:
 
         self.build_button = Button(master, text="Build", width=20, command=self.build)
         self.build_button.pack()
+        self.labelErr = Label(master, text="")
 
         self.classify_button = Button(master, text="Classify", width=20, command=self.classify)
         self.classify_button.pack()
@@ -89,12 +94,13 @@ class NaiveBayesClassifier:
             self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
             self.fillMissingValues()
             self.discretize()
+            self.classifier = Classifier.Classifier(self.train)
             tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
 
     def discretize(self):
         for arr in self.structureArr:
             if arr[2] == "NUMERIC":
-                self.train[arr[1]+"_Bin"] = self.binning(self.train[arr[1]])
+                self.train[arr[1]] = self.binning(self.train[arr[1]])
 
     def validate(self, new_text):
         if not new_text:  # the field is being cleared
@@ -129,7 +135,7 @@ class NaiveBayesClassifier:
             tmpInterval = interval + tmpInterval
 
         # create list by adding min and max to cut_points
-        break_points = [minval] + cut_points + [maxval]
+        break_points = [-float("inf")] + cut_points + [float("inf")]
         # if no labels provided, use default labels 0 ... (n-1)
         labels = range(len(cut_points)+1)
         # Binning using cut function of pandas
