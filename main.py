@@ -20,6 +20,7 @@ class NaiveBayesClassifier:
     structureArr = []
     structureFile = None
     classifier = None
+    discBins = {}
 
     def __init__(self, master):
 
@@ -84,23 +85,25 @@ class NaiveBayesClassifier:
 
             # load train file, test file and structure file
 
-            # self.structureFile = pd.read_csv(self.entryPath.get() + "/Structure.txt")
-            # print self.structureFile
-
             self.structureFile = open(self.entryPath.get() + "/Structure.txt")
             lines = self.structureFile.read().splitlines()
             for line in lines:
                 self.structureArr.append(line.split(" "))
             self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
+            self.toLowerCase("train")
             self.fillMissingValues()
-            self.discretize()
+            self.discretize("train")
             self.classifier = Classifier.Classifier(self.train)
             tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
 
-    def discretize(self):
+    def discretize(self, file):
         for arr in self.structureArr:
             if arr[2] == "NUMERIC":
-                self.train[arr[1]] = self.binning(self.train[arr[1]])
+                if file == "train":
+                    self.createBins(self.train[arr[1]], arr[1])
+                    self.train[arr[1]] = self.binning(self.train[arr[1]], self.discBins[arr[1]])
+                else:
+                    self.test[arr[1]] = self.binning(self.test[arr[1]], self.discBins[arr[1]])
 
     def validate(self, new_text):
         if not new_text:  # the field is being cleared
@@ -120,8 +123,15 @@ class NaiveBayesClassifier:
             elif arr[1] != "class":
                 self.train[arr[1]].fillna(self.train[arr[1]].mode()[0], inplace=True)
 
-    def binning(self, col):
+    def binning(self, col, break_points):
 
+        # if no labels provided, use default labels 0 ... (n-1)
+        labels = range(len(break_points)-1)
+        # Binning using cut function of pandas
+        colBin = pd.cut(col, bins=break_points, labels=labels, include_lowest=True)
+        return colBin
+
+    def createBins(self, col, attributeName):
         # Define min and max values
         minval = col.min()
         maxval = col.max()
@@ -136,14 +146,21 @@ class NaiveBayesClassifier:
 
         # create list by adding min and max to cut_points
         break_points = [-float("inf")] + cut_points + [float("inf")]
-        # if no labels provided, use default labels 0 ... (n-1)
-        labels = range(len(cut_points)+1)
-        # Binning using cut function of pandas
-        colBin = pd.cut(col, bins=break_points, labels=labels, include_lowest=True)
-        return colBin
+        self.discBins[attributeName] = break_points
 
     def classify(self):
         self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
+        self.toLowerCase("test")
+        self.discretize("test")
+        self.classifier.classify(self.test)
+
+    def toLowerCase(self, file):
+        for arr in self.structureArr:
+            if arr[2] != "NUMERIC" and arr[2] != "class":
+                if file == "train":
+                    self.train[arr[1]] = self.train[arr[1]].str.lower()
+                else:
+                    self.test[arr[1]] = self.test[arr[1]].str.lower()
 
 root = Tk()
 my_gui = NaiveBayesClassifier(root)
