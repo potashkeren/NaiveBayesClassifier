@@ -60,7 +60,7 @@ class Classifier:
                     if key != "class":
                         probabiRow = self.attrPro[(self.attrPro['classValue'] == classKey) & (self.attrPro['Attribute'] == key) & (self.attrPro['AttributeValue'] == value[index])]['Probability']
                         if probabiRow.empty:
-                            probability = 0
+                            probability = int(0)
                         else:
                             probability =float(probabiRow.values[0])
                         multiplier = float(multiplier) * float(probability)

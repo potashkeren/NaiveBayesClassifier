@@ -71,25 +71,31 @@ class NaiveBayesClassifier:
         self.close_button.grid(row=7, column=1, columnspan=2)
 
     def build(self):
-        self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
-        if self.validate(self.entryDiscBins.get()):
-            # load train file, test file and structure file
-            self.structureFile = open(self.entryPath.get() + "/Structure.txt")
-            lines = self.structureFile.read().splitlines()
-            for line in lines:
-                self.structureArr.append(line.split(" "))
-            self.toLowerCase("train")
-            self.fillMissingValues()
-            self.discretize("train")
-            self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
-            tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
+        try:
+            self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
+            if self.validate(self.entryDiscBins.get()):
+                # load train file, test file and structure file
+                self.structureFile = open(self.entryPath.get() + "/Structure.txt")
+                lines = self.structureFile.read().splitlines()
+                for line in lines:
+                    self.structureArr.append(line.split(" "))
+                self.toLowerCase("train")
+                self.fillMissingValues()
+                self.discretize("train")
+                self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
+                tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
+        except Exception, e:
+            tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     def classify(self):
+     try:
         self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
         self.toLowerCase("test")
         self.discretize("test")
         self.classifier.classify(self.test)
         tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
+     except Exception, e:
+         tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     def fillMissingValues(self):
         for arr in self.structureArr:
