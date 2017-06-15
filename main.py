@@ -81,27 +81,33 @@ class NaiveBayesClassifier:
         self.entryPath.insert(0, self.filePath)
 
     def build(self):
-        if self.validate(self.entryDiscBins.get()):
-            # load train file, test file and structure file
-            self.structureFile = open(self.entryPath.get() + "/Structure.txt")
-            lines = self.structureFile.read().splitlines()
-            for line in lines:
-                self.structureArr.append(line.split(" "))
-            self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
-            self.toLowerCase("train")
-            self.fillMissingValues()
-            self.discretize("train")
-            self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
-            tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
+        try:
+            if self.validate(self.entryDiscBins.get()):
+                # load train file, test file and structure file
+                self.structureFile = open(self.entryPath.get() + "/Structure.txt")
+                lines = self.structureFile.read().splitlines()
+                for line in lines:
+                    self.structureArr.append(line.split(" "))
+                self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
+                self.toLowerCase("train")
+                self.fillMissingValues()
+                self.discretize("train")
+                self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
+                tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
+        except Exception, e:
+            tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     def discretize(self, file):
-        for arr in self.structureArr:
-            if arr[2] == "NUMERIC":
-                if file == "train":
-                    self.createBins(self.train[arr[1]], arr[1])
-                    self.train[arr[1]] = self.binning(self.train[arr[1]], self.discBins[arr[1]])
-                else:
-                    self.test[arr[1]] = self.binning(self.test[arr[1]], self.discBins[arr[1]])
+        try:
+            for arr in self.structureArr:
+                if arr[2] == "NUMERIC":
+                    if file == "train":
+                        self.createBins(self.train[arr[1]], arr[1])
+                        self.train[arr[1]] = self.binning(self.train[arr[1]], self.discBins[arr[1]])
+                    else:
+                        self.test[arr[1]] = self.binning(self.test[arr[1]], self.discBins[arr[1]])
+        except Exception, e:
+            tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     def validate(self, new_text):
         if not new_text:  # the field is being cleared
@@ -142,7 +148,7 @@ class NaiveBayesClassifier:
             tmpInterval = float(interval + tmpInterval)
 
         # create list by adding min and max to cut_points
-        break_points = [-float("inf")] + cut_points + [float("inf")]
+        break_points = [float('-inf')] + cut_points + [float('inf')]
         self.discBins[attributeName] = break_points
 
     def classify(self):
