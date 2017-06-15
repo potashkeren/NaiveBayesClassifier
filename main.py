@@ -82,9 +82,7 @@ class NaiveBayesClassifier:
 
     def build(self):
         if self.validate(self.entryDiscBins.get()):
-
             # load train file, test file and structure file
-
             self.structureFile = open(self.entryPath.get() + "/Structure.txt")
             lines = self.structureFile.read().splitlines()
             for line in lines:
@@ -119,12 +117,11 @@ class NaiveBayesClassifier:
     def fillMissingValues(self):
         for arr in self.structureArr:
             if arr[2] == "NUMERIC":
-                self.train[arr[1]].fillna(self.train[arr[1]].mean(), inplace=True)
+                self.train[arr[1]].fillna(float(self.train[arr[1]].mean()), inplace=True)
             elif arr[1] != "class":
                 self.train[arr[1]].fillna(self.train[arr[1]].mode()[0], inplace=True)
 
     def binning(self, col, break_points):
-
         # if no labels provided, use default labels 0 ... (n-1)
         labels = range(len(break_points)-1)
         # Binning using cut function of pandas
@@ -133,8 +130,8 @@ class NaiveBayesClassifier:
 
     def createBins(self, col, attributeName):
         # Define min and max values
-        minval = col.min()
-        maxval = col.max()
+        minval = float(col.min())
+        maxval = float(col.max())
 
         # cut_points = np.histogram(col, bins=self.numOfBins, range=None, normed=False, weights=None, new=None)
         interval = float(maxval - minval) / float(self.numOfBins)
@@ -142,7 +139,7 @@ class NaiveBayesClassifier:
         cut_points = []
         while tmpInterval < maxval:
             cut_points.append(tmpInterval)
-            tmpInterval = interval + tmpInterval
+            tmpInterval = float(interval + tmpInterval)
 
         # create list by adding min and max to cut_points
         break_points = [-float("inf")] + cut_points + [float("inf")]

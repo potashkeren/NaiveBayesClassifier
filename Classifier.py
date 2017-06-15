@@ -45,7 +45,7 @@ class Classifier:
                         # Nc in the formula
                         numOfShowes = len(self.train[(self.train[attribute] == atrr) & (self.train[self.train.columns[-1]] == key)])
                         # calculate the formula
-                        result = float(numOfShowes + self.m * (1 / atrrCounter)) / float(value[0] + self.m)
+                        result = float(numOfShowes + self.m * float(1 / atrrCounter)) / float(value[0] + self.m)
                         # add the result to the table
                         self.attrPro.loc[len(self.attrPro)] = [key, attribute, atrr, result]
 
