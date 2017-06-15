@@ -1,13 +1,9 @@
-
 from Tkinter import *
 import tkFileDialog
 import pandas as pd
-import numpy as np
 import tkMessageBox
-import math
 import Classifier
 
-from scipy.stats import mode
 
 class NaiveBayesClassifier:
 
@@ -26,21 +22,20 @@ class NaiveBayesClassifier:
 
         self.master = master
         master.title("Naive Bayes Classifier")
-        master.geometry("500x300")
+        master.geometry("650x300")
 
         # init buttons, labels and entries
         self.labelPath = Label(master, text="Directory Path:")
-        self.entryPath = Entry(master, width=50)
+        self.entryPath = Entry(master, width=70)
         self.browse_button = Button(master, text="Browse", width=10, command=self.askopenfile)
         self.browse_button.pack()
 
         self.labelDiscBins = Label(master, text="Discretization Bins:")
-        vcmd = master.register(self.validate)   # we have to wrap the command
-        self.entryDiscBins = Entry(master, width=20, validate="key", validatecommand=(vcmd, '%P'))
+        self.entryDiscBins = Entry(master, width=20, validate="key")
 
         self.build_button = Button(master, text="Build", width=20, command=self.build)
         self.build_button.pack()
-        self.labelErr = Label(master, text="")
+        self.labelErr = Label(master, text="", fg="red", font="Verdana 10 bold")
 
         self.classify_button = Button(master, text="Classify", width=20, command=self.classify)
         self.classify_button.pack()
@@ -70,55 +65,31 @@ class NaiveBayesClassifier:
         self.labelDiscBins.grid(row=2, column=0, sticky=E)
         self.entryDiscBins.grid(row=2, column=1, sticky=W)
 
-        self.labelErr.grid(row=4, column=1, columnspan=2)
+        self.labelErr.grid(row=4, column=0, columnspan=4, sticky=W)
         self.build_button.grid(row=5, column=1, columnspan=2)
         self.classify_button.grid(row=6, column=1, columnspan=2)
         self.close_button.grid(row=7, column=1, columnspan=2)
 
-    def askopenfile(self):
-        self.filePath = tkFileDialog.askdirectory()
-        self.entryPath.delete(0, END)
-        self.entryPath.insert(0, self.filePath)
-
     def build(self):
-        try:
-            if self.validate(self.entryDiscBins.get()):
-                # load train file, test file and structure file
-                self.structureFile = open(self.entryPath.get() + "/Structure.txt")
-                lines = self.structureFile.read().splitlines()
-                for line in lines:
-                    self.structureArr.append(line.split(" "))
-                self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
-                self.toLowerCase("train")
-                self.fillMissingValues()
-                self.discretize("train")
-                self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
-                tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
-        except Exception, e:
-            tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
+        self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
+        if self.validate(self.entryDiscBins.get()):
+            # load train file, test file and structure file
+            self.structureFile = open(self.entryPath.get() + "/Structure.txt")
+            lines = self.structureFile.read().splitlines()
+            for line in lines:
+                self.structureArr.append(line.split(" "))
+            self.toLowerCase("train")
+            self.fillMissingValues()
+            self.discretize("train")
+            self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
+            tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
 
-    def discretize(self, file):
-        try:
-            for arr in self.structureArr:
-                if arr[2] == "NUMERIC":
-                    if file == "train":
-                        self.createBins(self.train[arr[1]], arr[1])
-                        self.train[arr[1]] = self.binning(self.train[arr[1]], self.discBins[arr[1]])
-                    else:
-                        self.test[arr[1]] = self.binning(self.test[arr[1]], self.discBins[arr[1]])
-        except Exception, e:
-            tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
-
-    def validate(self, new_text):
-        if not new_text:  # the field is being cleared
-            self.labelErr['text'] = "Please enter a number"
-            return False
-        try:
-            self.numOfBins = int(new_text)
-            self.labelErr['text'] = ""
-            return True
-        except ValueError:
-            self.labelErr['text'] = "Invalid input - Please enter a number"
+    def classify(self):
+        self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
+        self.toLowerCase("test")
+        self.discretize("test")
+        self.classifier.classify(self.test)
+        tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
 
     def fillMissingValues(self):
         for arr in self.structureArr:
@@ -126,6 +97,15 @@ class NaiveBayesClassifier:
                 self.train[arr[1]].fillna(float(self.train[arr[1]].mean()), inplace=True)
             elif arr[1] != "class":
                 self.train[arr[1]].fillna(self.train[arr[1]].mode()[0], inplace=True)
+
+    def discretize(self, file):
+        for attribute in self.structureArr:
+            if attribute[2] == "NUMERIC":
+                if file == "train":
+                    self.createBins(self.train[attribute[1]], attribute[1])
+                    self.train[attribute[1]] = self.binning(self.train[attribute[1]], self.discBins[attribute[1]])
+                else:
+                    self.test[attribute[1]] = self.binning(self.test[attribute[1]], self.discBins[attribute[1]])
 
     def binning(self, col, break_points):
         # if no labels provided, use default labels 0 ... (n-1)
@@ -139,7 +119,6 @@ class NaiveBayesClassifier:
         minval = float(col.min())
         maxval = float(col.max())
 
-        # cut_points = np.histogram(col, bins=self.numOfBins, range=None, normed=False, weights=None, new=None)
         interval = float(maxval - minval) / float(self.numOfBins)
         tmpInterval = float(interval + minval)
         cut_points = []
@@ -148,15 +127,8 @@ class NaiveBayesClassifier:
             tmpInterval = float(interval + tmpInterval)
 
         # create list by adding min and max to cut_points
-        break_points = [float('-inf')] + cut_points + [float('inf')]
+        break_points = [-float("inf")] + cut_points + [float("inf")]
         self.discBins[attributeName] = break_points
-
-    def classify(self):
-        self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
-        self.toLowerCase("test")
-        self.discretize("test")
-        self.classifier.classify(self.test)
-        tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
 
     def toLowerCase(self, file):
         for arr in self.structureArr:
@@ -165,6 +137,32 @@ class NaiveBayesClassifier:
                     self.train[arr[1]] = self.train[arr[1]].str.lower()
                 else:
                     self.test[arr[1]] = self.test[arr[1]].str.lower()
+
+    def askopenfile(self):
+        self.filePath = tkFileDialog.askdirectory()
+        self.entryPath.delete(0, END)
+        self.entryPath.insert(0, self.filePath)
+
+    def validate(self, new_text):
+        if not new_text:  # the field is being cleared
+            self.labelErr['text'] = "Please enter a number"
+            return False
+        try:
+            self.numOfBins = int(new_text)
+            # check validate number
+            if self.numOfBins < 2:
+                self.labelErr['text'] = "The number for \"Discretization Bins\" should be bigger than 1"
+                return False
+            elif self.numOfBins > self.train.count()[0]:
+                self.labelErr['text'] = "\"Discretization Bins\" shouldn't be higher then the number of records"
+                return False
+            # if the numer is valid
+            else:
+                self.labelErr['text'] = ""
+                return True
+
+        except ValueError:
+            self.labelErr['text'] = "Invalid input - Please enter a number"
 
 root = Tk()
 my_gui = NaiveBayesClassifier(root)
