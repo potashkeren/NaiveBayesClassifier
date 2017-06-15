@@ -6,8 +6,10 @@ import csv
 class Classifier:
 
     train = None
-    classesData = {}
     m = 2
+    # dictionary - key: class, value: array [count of class, probability]
+    classesData = {}
+    # table for the pre-processing, calculate all the train file probability
     attrPro = pd.DataFrame(columns=['classValue', 'Attribute', 'AttributeValue', 'Probability'])
     testClassified = {}
 
@@ -41,11 +43,12 @@ class Classifier:
                         # add the result to the table
                         self.attrPro.loc[len(self.attrPro)] = [key, attribute, atrr, result]
 
+
     def classify(self, test):
         index = 1
         for key, value in test.iteritems():
             for classKey, classValue in self.classesData.items():
-                probability = self.attrPro[(self.attrPro['classValue']== classKey) & (self.attrPro['Attribute'] == key) & (self.attrPro['AttributeValue'] == value[index])]['Probability'].values[0]
+                probability = self.attrPro[(self.attrPro['classValue'] == classKey) & (self.attrPro['Attribute'] == key) & (self.attrPro['AttributeValue'] == value[index])]['Probability'].values[0]
             index = index+1
 
 
