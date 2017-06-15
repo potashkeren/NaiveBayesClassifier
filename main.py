@@ -93,7 +93,7 @@ class NaiveBayesClassifier:
             self.toLowerCase("train")
             self.fillMissingValues()
             self.discretize("train")
-            self.classifier = Classifier.Classifier(self.train)
+            self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
             tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
 
     def discretize(self, file):
@@ -153,6 +153,7 @@ class NaiveBayesClassifier:
         self.toLowerCase("test")
         self.discretize("test")
         self.classifier.classify(self.test)
+        tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
 
     def toLowerCase(self, file):
         for arr in self.structureArr:
