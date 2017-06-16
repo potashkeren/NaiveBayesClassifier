@@ -19,6 +19,7 @@ class NaiveBayesClassifier:
     discBins = {}
     wasBuilt = False
 
+    # Initialize the GUI
     def __init__(self, master):
 
         self.master = master
@@ -71,6 +72,7 @@ class NaiveBayesClassifier:
         self.classify_button.grid(row=6, column=1, columnspan=2)
         self.close_button.grid(row=7, column=1, columnspan=2)
 
+    # Build button was clicked
     def build(self):
         try:
             self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
@@ -89,6 +91,7 @@ class NaiveBayesClassifier:
         except Exception, e:
             tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
+    # Clasify button was clicked
     def classify(self):
      try:
          if self.wasBuilt:
@@ -103,6 +106,7 @@ class NaiveBayesClassifier:
      except Exception, e:
          tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
+    # Fill missing values in the dataser
     def fillMissingValues(self):
         for arr in self.structureArr:
             if arr[2] == "NUMERIC":
@@ -110,6 +114,7 @@ class NaiveBayesClassifier:
             elif arr[1] != "class":
                 self.train[arr[1]].fillna(self.train[arr[1]].mode()[0], inplace=True)
 
+    # Discretisiza the data
     def discretize(self, file):
         for attribute in self.structureArr:
             if attribute[2] == "NUMERIC":
@@ -119,6 +124,7 @@ class NaiveBayesClassifier:
                 else:
                     self.test[attribute[1]] = self.binning(self.test[attribute[1]], self.discBins[attribute[1]])
 
+    # Create binning array
     def binning(self, col, break_points):
         # if no labels provided, use default labels 0 ... (n-1)
         labels = range(len(break_points)-1)
@@ -126,6 +132,7 @@ class NaiveBayesClassifier:
         colBin = pd.cut(col, bins=break_points, labels=labels, include_lowest=True)
         return colBin
 
+    # Calculate bins for tarin
     def createBins(self, col, attributeName):
         # Define min and max values
         minval = float(col.min())
@@ -142,6 +149,7 @@ class NaiveBayesClassifier:
         break_points = [-float("inf")] + cut_points + [float("inf")]
         self.discBins[attributeName] = break_points
 
+    # Trnadfer dataset to lowercase
     def toLowerCase(self, file):
         for arr in self.structureArr:
             if arr[2] != "NUMERIC" and arr[2] != "class":
@@ -150,11 +158,13 @@ class NaiveBayesClassifier:
                 else:
                     self.test[arr[1]] = self.test[arr[1]].str.lower()
 
+    # Open file dialog openrer
     def askopenfile(self):
         self.filePath = tkFileDialog.askdirectory()
         self.entryPath.delete(0, END)
         self.entryPath.insert(0, self.filePath)
 
+    # Validate input
     def validate(self, new_text):
         if not new_text:  # the field is being cleared
             self.labelErr['text'] = "Please enter a number"
@@ -176,6 +186,7 @@ class NaiveBayesClassifier:
         except ValueError:
             self.labelErr['text'] = "Invalid input - Please enter a number"
 
+    # Reset global variables
     def reset(self):
         # reseet data members
         self.master = None

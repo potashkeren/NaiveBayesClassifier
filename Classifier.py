@@ -23,7 +23,7 @@ class Classifier:
         self.classProbability()
         self.attributesProbability()
 
-
+    # Calculate the class probability
     def classProbability(self):
         classes = self.train["class"].unique()
         countClasses = pd.value_counts(self.train["class"])
@@ -31,6 +31,7 @@ class Classifier:
         for cls in classes:
             self.classesData[cls] = [countClasses[cls], classPro[cls]]
 
+    # Calculate attributes probabilities
     def attributesProbability(self):
         # for each attribute in the train file
         for attribute in self.train:
@@ -49,7 +50,7 @@ class Classifier:
                         # add the result to the table
                         self.attrPro.loc[len(self.attrPro)] = [key, attribute, atrr, result]
 
-
+    # Naive bayes calculation
     def classify(self, test):
         self.testDF = test
         for index in range(0, test.count()[0]):
@@ -73,11 +74,13 @@ class Classifier:
             self.classification_results.append(maxProb)
         print self.get_accuracy()
 
+    # Write results to file
     def writeToFile(self, classify, index):
         text_file = open(self.path + "/Output.txt", "a")
         text_file.write('%d %s \n' %(index, classify))
         text_file.close()
 
+    # returns algorithm's accuracy
     def get_accuracy(self):
         hits = int(0)
         test_class = self.testDF["class"]
