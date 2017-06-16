@@ -170,6 +170,19 @@ class NaiveBayesClassifier:
         except ValueError:
             self.labelErr['text'] = "Invalid input - Please enter a number"
 
+    def reset(self):
+        # reseet data members
+        self.master = None
+        self.filePath = ""
+        self.numOfBins = 0
+        self.train = None
+        self.test = None
+        self.structureArr = []
+        self.structureFile = None
+        self.classifier = None
+        self.discBins = {}
+
+
 root = Tk()
 my_gui = NaiveBayesClassifier(root)
 root.mainloop()
