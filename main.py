@@ -17,6 +17,7 @@ class NaiveBayesClassifier:
     structureFile = None
     classifier = None
     discBins = {}
+    wasBuilt = False
 
     def __init__(self, master):
 
@@ -83,17 +84,22 @@ class NaiveBayesClassifier:
                 self.fillMissingValues()
                 self.discretize("train")
                 self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
+                self.wasBuilt = True
                 tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
         except Exception, e:
             tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     def classify(self):
      try:
-        self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
-        self.toLowerCase("test")
-        self.discretize("test")
-        self.classifier.classify(self.test)
-        tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
+         if self.wasBuilt:
+            self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
+            self.toLowerCase("test")
+            self.discretize("test")
+            self.classifier.classify(self.test)
+            tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
+            self.reset()
+         else:
+            tkMessageBox.showinfo("Error Message", "Please build before Classifying")
      except Exception, e:
          tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
@@ -181,7 +187,7 @@ class NaiveBayesClassifier:
         self.structureFile = None
         self.classifier = None
         self.discBins = {}
-
+        self.wasBuilt = False
 
 root = Tk()
 my_gui = NaiveBayesClassifier(root)
