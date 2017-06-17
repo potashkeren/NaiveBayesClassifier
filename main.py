@@ -18,6 +18,7 @@ class NaiveBayesClassifier:
     classifier = None
     discBins = {}
     wasBuilt = False
+    structure_dic = {}
 
     # Initialize the GUI
     def __init__(self, master):
@@ -82,10 +83,11 @@ class NaiveBayesClassifier:
                 lines = self.structureFile.read().splitlines()
                 for line in lines:
                     self.structureArr.append(line.split(" "))
+                self.createStstructureDic()
                 self.toLowerCase("train")
                 self.fillMissingValues()
                 self.discretize("train")
-                self.classifier = Classifier.Classifier(self.train, self.entryPath.get())
+                self.classifier = Classifier.Classifier(self.train, self.entryPath.get(), self.structure_dic,self.numOfBins)
                 self.wasBuilt = True
                 tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
         except Exception, e:
@@ -172,8 +174,8 @@ class NaiveBayesClassifier:
         try:
             self.numOfBins = int(new_text)
             # check validate number
-            if self.numOfBins < 2:
-                self.labelErr['text'] = "The number for \"Discretization Bins\" should be bigger than 1"
+            if self.numOfBins < 1:
+                self.labelErr['text'] = "The number for \"Discretization Bins\" should be bigger than 0"
                 return False
             elif self.numOfBins > self.train.count()[0]:
                 self.labelErr['text'] = "\"Discretization Bins\" shouldn't be higher then the number of records"
@@ -199,6 +201,17 @@ class NaiveBayesClassifier:
         self.classifier = None
         self.discBins = {}
         self.wasBuilt = False
+        self.structure_dic={}
+
+    def createStstructureDic(self):
+        for attribute in self.structureArr:
+            if attribute[2] == "NUMERIC":
+                self.structure_dic[attribute[1]] = attribute[2]
+            else:
+                atrrList = attribute[2].replace("{", "").replace("}", "").split(",")
+                self.structure_dic[attribute[1]] = atrrList
+
+
 
 root = Tk()
 my_gui = NaiveBayesClassifier(root)

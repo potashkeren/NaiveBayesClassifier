@@ -9,6 +9,7 @@ class Classifier:
     train = None
     testDF = None
     classification_results = []
+    structure = []
     m = 2
     # dictionary - key: class, value: array [count of class, probability]
     classesData = {}
@@ -16,10 +17,13 @@ class Classifier:
     attrPro = pd.DataFrame(columns=['classValue', 'Attribute', 'AttributeValue', 'Probability'])
     testClassified = {}
     path = ""
+    numOfBins = 0
 
-    def __init__(self, testFile, pathFiles):
+    def __init__(self, testFile, pathFiles, structure,numOfBins):
         self.train = testFile
         self.path = pathFiles
+        self.structure = structure
+        self.numOfBins = numOfBins
         self.classProbability()
         self.attributesProbability()
 
@@ -34,21 +38,28 @@ class Classifier:
     # Calculate attributes probabilities
     def attributesProbability(self):
         # for each attribute in the train file
-        for attribute in self.train:
+        for attribute in self.structure:
             if attribute != "class":
                 # go through all the classes
                 for key, value in self.classesData.items():
-                    # get the unique values for each attribute
-                    atrrValues = self.train[attribute].unique()
-                    for atrr in atrrValues:
-                        # p in the formula
-                        atrrCounter = self.train[attribute].unique().size
-                        # Nc in the formula
-                        numOfShowes = len(self.train[(self.train[attribute] == atrr) & (self.train[self.train.columns[-1]] == key)])
-                        # calculate the formula
-                        result = float(numOfShowes + self.m * float(1 / atrrCounter)) / float(value[0] + self.m)
-                        # add the result to the table
-                        self.attrPro.loc[len(self.attrPro)] = [key, attribute, atrr, result]
+                    if self.structure[attribute] == "NUMERIC":
+                        for i in range(0, self.numOfBins):
+                          # Nc in the formula
+                          numOfShowes = len(self.train[(self.train[attribute] == i) & (self.train[self.train.columns[-1]] == key)])
+                          # calculate the formula
+                          result = float(numOfShowes + self.m * float(1.0 / self.numOfBins)) / float(value[0] + self.m)
+                          # add the result to the table
+                          self.attrPro.loc[len(self.attrPro)] = [key, attribute, i, result]
+                    else:
+                        listatrr = self.structure[attribute]
+                        for atrr in listatrr:
+                          # Nc in the formula
+                          numOfShowes = len(self.train[(self.train[attribute] == atrr) & (self.train[self.train.columns[-1]] == key)])
+                          # calculate the formula
+                          result = float(numOfShowes + self.m * float(1.0 / listatrr.__len__())) / float(value[0] + self.m)
+                          # add the result to the table
+                          self.attrPro.loc[len(self.attrPro)] = [key, attribute, atrr, result]
+        i=0
 
     # Naive bayes calculation
     def classify(self, test):
