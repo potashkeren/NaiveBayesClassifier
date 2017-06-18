@@ -3,6 +3,8 @@ import tkFileDialog
 import pandas as pd
 import tkMessageBox
 import Classifier
+from FilesHandler import *
+from DataCleaner import *
 
 
 class NaiveBayesClassifier:
@@ -13,12 +15,13 @@ class NaiveBayesClassifier:
     numOfBins = 0
     train = None
     test = None
-    structureArr = []
     structureFile = None
-    classifier = None
     discBins = {}
     wasBuilt = False
-    structure_dic = {}
+    structureDic = {}
+    fileHandler = None
+    classifier = None
+    dataCleaner = None
 
     # Initialize the GUI
     def __init__(self, master):
@@ -27,7 +30,7 @@ class NaiveBayesClassifier:
         master.title("Naive Bayes Classifier")
         master.geometry("650x300")
 
-        # init buttons, labels and entries
+        # <editor-fold desc="init buttons, labels and entries">
         self.labelPath = Label(master, text="Directory Path:")
         self.entryPath = Entry(master, width=70)
         self.browse_button = Button(master, text="Browse", width=10, command=self.askopenfile)
@@ -45,8 +48,25 @@ class NaiveBayesClassifier:
 
         self.close_button = Button(master, text="Exit", width=10, command=master.quit)
         self.close_button.pack()
-
+        #</editor-fold>
         # Define grid
+        self.gridDefinition(master)
+        # layout the controls in the grid
+        self.controlsLayout()
+
+    # <editor-fold desc="Gui Functions">
+    def controlsLayout(self):
+        self.labelPath.grid(row=1, column=0, sticky=E)
+        self.entryPath.grid(row=1, column=1, columnspan=2, sticky=W)
+        self.browse_button.grid(row=1, column=3, sticky=W)
+        self.labelDiscBins.grid(row=2, column=0, sticky=E)
+        self.entryDiscBins.grid(row=2, column=1, sticky=W)
+        self.labelErr.grid(row=4, column=0, columnspan=4, sticky=W)
+        self.build_button.grid(row=5, column=1, columnspan=2)
+        self.classify_button.grid(row=6, column=1, columnspan=2)
+        self.close_button.grid(row=7, column=1, columnspan=2)
+
+    def gridDefinition(self, master):
         master.grid_rowconfigure(0, weight=2)
         master.grid_rowconfigure(1, weight=1)
         master.grid_rowconfigure(2, weight=1)
@@ -59,19 +79,7 @@ class NaiveBayesClassifier:
         master.grid_columnconfigure(1, weight=1)
         master.grid_columnconfigure(2, weight=1)
         master.grid_columnconfigure(3, weight=2)
-
-        # LAYOUT
-        self.labelPath.grid(row=1, column=0, sticky=E)
-        self.entryPath.grid(row=1, column=1, columnspan=2, sticky=W)
-        self.browse_button.grid(row=1, column=3, sticky=W)
-
-        self.labelDiscBins.grid(row=2, column=0, sticky=E)
-        self.entryDiscBins.grid(row=2, column=1, sticky=W)
-
-        self.labelErr.grid(row=4, column=0, columnspan=4, sticky=W)
-        self.build_button.grid(row=5, column=1, columnspan=2)
-        self.classify_button.grid(row=6, column=1, columnspan=2)
-        self.close_button.grid(row=7, column=1, columnspan=2)
+    # </editor-fold>
 
     # Build button was clicked
     def build(self):
@@ -80,14 +88,12 @@ class NaiveBayesClassifier:
             if self.validate(self.entryDiscBins.get()):
                 # load train file, test file and structure file
                 self.structureFile = open(self.entryPath.get() + "/Structure.txt")
-                lines = self.structureFile.read().splitlines()
-                for line in lines:
-                    self.structureArr.append(line.split(" "))
-                self.createStstructureDic()
+                self.fileHandler = FilesHandler()
+                self.structureDic = self.fileHandler.createStstructureDic(self.structureFile)
+                self.dataCleaner = DataCleaner(self.structureDic, self.numOfBins)
                 self.toLowerCase("train")
-                self.fillMissingValues()
-                self.discretize("train")
-                self.classifier = Classifier.Classifier(self.train, self.entryPath.get(), self.structure_dic,self.numOfBins)
+                self.train = self.dataCleaner.trainCleaning(self.train)
+                self.classifier = Classifier.Classifier(self.train, self.entryPath.get(), self.structureDic, self.numOfBins)
                 self.wasBuilt = True
                 tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
         except Exception, e:
@@ -99,66 +105,23 @@ class NaiveBayesClassifier:
          if self.wasBuilt:
             self.test = pd.read_csv(self.entryPath.get() + "/test.csv")
             self.toLowerCase("test")
-            self.discretize("test")
+            self.test = self.dataCleaner.testCleaning(self.test)
             self.classifier.classify(self.test)
-            tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
             self.reset()
+            tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
          else:
             tkMessageBox.showinfo("Error Message", "Please build before Classifying")
      except Exception, e:
          tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
-    # Fill missing values in the dataser
-    def fillMissingValues(self):
-        for arr in self.structureArr:
-            if arr[2] == "NUMERIC":
-                self.train[arr[1]].fillna(float(self.train[arr[1]].mean()), inplace=True)
-            elif arr[1] != "class":
-                self.train[arr[1]].fillna(self.train[arr[1]].mode()[0], inplace=True)
-
-    # Discretisiza the data
-    def discretize(self, file):
-        for attribute in self.structureArr:
-            if attribute[2] == "NUMERIC":
-                if file == "train":
-                    self.createBins(self.train[attribute[1]], attribute[1])
-                    self.train[attribute[1]] = self.binning(self.train[attribute[1]], self.discBins[attribute[1]])
-                else:
-                    self.test[attribute[1]] = self.binning(self.test[attribute[1]], self.discBins[attribute[1]])
-
-    # Create binning array
-    def binning(self, col, break_points):
-        # if no labels provided, use default labels 0 ... (n-1)
-        labels = range(len(break_points)-1)
-        # Binning using cut function of pandas
-        colBin = pd.cut(col, bins=break_points, labels=labels, include_lowest=True)
-        return colBin
-
-    # Calculate bins for tarin
-    def createBins(self, col, attributeName):
-        # Define min and max values
-        minval = float(col.min())
-        maxval = float(col.max())
-
-        interval = float(maxval - minval) / float(self.numOfBins)
-        tmpInterval = float(interval + minval)
-        cut_points = []
-        while tmpInterval < maxval:
-            cut_points.append(tmpInterval)
-            tmpInterval = float(interval + tmpInterval)
-
-        # create list by adding min and max to cut_points
-        break_points = [-float("inf")] + cut_points + [float("inf")]
-        self.discBins[attributeName] = break_points
-
-    # Trnadfer dataset to lowercase
+    # Trnasfer dataset to lowercase
     def toLowerCase(self, file):
-        for arr in self.structureArr:
-            if arr[2] != "NUMERIC" and arr[2] != "class":
+        for attribute in self.structureDic:
+            if self.structureDic[attribute] != "NUMERIC" and attribute != "class":
                 if file == "train":
-                    self.train[arr[1]] = self.train[arr[1]].str.lower()
+                    self.train[attribute] = self.train[attribute].str.lower()
                 else:
-                    self.test[arr[1]] = self.test[arr[1]].str.lower()
+                    self.test[attribute] = self.test[attribute].str.lower()
 
     # Open file dialog openrer
     def askopenfile(self):
@@ -196,20 +159,13 @@ class NaiveBayesClassifier:
         self.numOfBins = 0
         self.train = None
         self.test = None
-        self.structureArr = []
         self.structureFile = None
         self.classifier = None
         self.discBins = {}
+        self.structureDic = {}
+        self.fileHandler = None
+        self.dataCleaner = None
         self.wasBuilt = False
-        self.structure_dic={}
-
-    def createStstructureDic(self):
-        for attribute in self.structureArr:
-            if attribute[2] == "NUMERIC":
-                self.structure_dic[attribute[1]] = attribute[2]
-            else:
-                atrrList = attribute[2].replace("{", "").replace("}", "").split(",")
-                self.structure_dic[attribute[1]] = atrrList
 
 
 

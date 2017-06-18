@@ -58,13 +58,11 @@ class Classifier:
                           # Nc in the formula
                           numOfShowes = len(self.train[(self.train[attribute] == atrr) & (self.train[self.train.columns[-1]] == key)])
                           # calculate the formula
-                          mone = float( numOfShowes+ float(self.m * float(1.0 / listatrr.__len__())))
-                          mechane = float(value[0] + self.m)
-                          result = mone / mechane
+                          result = float( numOfShowes+ float(self.m * float(1.0 / listatrr.__len__()))) /float(value[0] + self.m)
                           # add the result to the table
                           attrProbabality[attribute][atrr] = result
             self.atrrProDic[key] = attrProbabality
-        i=0
+
 
     # Naive bayes calculation
     def classify(self, test):
