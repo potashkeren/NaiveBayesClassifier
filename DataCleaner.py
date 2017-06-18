@@ -57,10 +57,14 @@ class DataCleaner:
         interval = float(maxval - minval) / float(self.numOfBins)
         tmpInterval = float(interval + minval)
         cut_points = []
-        while (tmpInterval < maxval):
+        for i in range(self.numOfBins-1):
             cut_points.append(tmpInterval)
             tmpInterval = float(interval + tmpInterval)
 
         # create list by adding min and max to cut_points
         break_points = [-float("inf")] + cut_points + [float("inf")]
         self.discBins[attributeName] = break_points
+
+    def reset(self):
+        self.structureDic = dict()
+        self.discBins= {}

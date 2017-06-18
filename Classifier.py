@@ -66,11 +66,17 @@ class Classifier:
 
     # Naive bayes calculation
     def classify(self, test):
+
         self.testDF = test
+        text_file = open(self.path + "/Output.txt", "w")
+
+        # classify each row in the testFile
         for index in range(0, test.count()[0]):
             classProbList = {}
+            # calculate evidence probability for each class
             for classKey, classValue in self.classesData.items():
                 multiplier = float(1)
+                # multiply the probabilities of all attribute's probability for this evidence by file training
                 for key, value in test.iteritems():
                     if key != "class":
                         probability = self.atrrProDic[classKey][key][value[index]]
@@ -80,15 +86,10 @@ class Classifier:
                 classProbList[classKey] = float(classProb)
             # classify the record according to the max probability
             maxProb = max(classProbList.iteritems(), key=operator.itemgetter(1))[0]
-            self.writeToFile(index + 1, maxProb)
+            text_file.write('%d %s\n' % (index+1, maxProb))
             self.classification_results.append(maxProb)
-        self.get_accuracy()
-
-    # Write results to file
-    def writeToFile(self, index, classify):
-        text_file = open(self.path + "/Output.txt", "a")
-        text_file.write('%d %s\n' % (index, classify))
         text_file.close()
+        self.get_accuracy()
 
     # returns algorithm's accuracy
     def get_accuracy(self):
@@ -100,6 +101,13 @@ class Classifier:
                 hits = hits + 1
         accuracy = "%.3f" % ((float(hits) / float(self.classification_results.__len__())) * 100)
         print (accuracy)
+
+    def reset(self):
+        self.classification_results = []
+        self.structure = []
+        self.classesData = {}
+        self.atrrProDic = dict()
+        self.testClassified = {}
 
 
 

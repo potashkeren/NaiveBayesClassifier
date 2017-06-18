@@ -2,7 +2,7 @@ from Tkinter import *
 import tkFileDialog
 import pandas as pd
 import tkMessageBox
-import Classifier
+from Classifier import *
 from FilesHandler import *
 from DataCleaner import *
 
@@ -93,7 +93,7 @@ class NaiveBayesClassifier:
                 self.dataCleaner = DataCleaner(self.structureDic, self.numOfBins)
                 self.toLowerCase("train")
                 self.train = self.dataCleaner.trainCleaning(self.train)
-                self.classifier = Classifier.Classifier(self.train, self.entryPath.get(), self.structureDic, self.numOfBins)
+                self.classifier = Classifier(self.train, self.entryPath.get(), self.structureDic, self.numOfBins)
                 self.wasBuilt = True
                 tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
         except Exception, e:
@@ -160,10 +160,12 @@ class NaiveBayesClassifier:
         self.train = None
         self.test = None
         self.structureFile = None
+        self.classifier.reset()
         self.classifier = None
         self.discBins = {}
         self.structureDic = {}
         self.fileHandler = None
+        self.dataCleaner.reset()
         self.dataCleaner = None
         self.wasBuilt = False
 

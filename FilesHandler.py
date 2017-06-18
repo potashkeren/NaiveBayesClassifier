@@ -4,18 +4,13 @@ import tkMessageBox
 
 class FilesHandler:
 
-    train = None
-    test = None
-    path = ""
-    numOfBins = 0
-    structureFile = None
     structureDic = dict()
-    errorLabel = None
 
     def __init__(self,):
         i=0
 
     def createStstructureDic(self, file):
+        self.structureDic = dict()
         lines = file.read().splitlines()
         structureArr = []
         for line in lines:
