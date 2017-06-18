@@ -14,7 +14,7 @@ class Classifier:
     # dictionary - key: class, value: array [count of class, probability]
     classesData = {}
     # table for the pre-processing, calculate all the train file probability
-    attrPro = pd.DataFrame(columns=['classValue', 'Attribute', 'AttributeValue', 'Probability'])
+    atrrProDic = dict()
     testClassified = {}
     path = ""
     numOfBins = 0
@@ -37,11 +37,13 @@ class Classifier:
 
     # Calculate attributes probabilities
     def attributesProbability(self):
-        # for each attribute in the train file
-        for attribute in self.structure:
-            if attribute != "class":
-                # go through all the classes
-                for key, value in self.classesData.items():
+        # go through all the classes
+        for key, value in self.classesData.items():
+            attrProbabality = dict()
+            # for each attribute in the train file
+            for attribute in self.structure:
+                if attribute != "class":
+                    attrProbabality[attribute] = dict()
                     if self.structure[attribute] == "NUMERIC":
                         for i in range(0, self.numOfBins):
                           # Nc in the formula
@@ -49,16 +51,19 @@ class Classifier:
                           # calculate the formula
                           result = float(numOfShowes + self.m * float(1.0 / self.numOfBins)) / float(value[0] + self.m)
                           # add the result to the table
-                          self.attrPro.loc[len(self.attrPro)] = [key, attribute, i, result]
+                          attrProbabality[attribute][i] = result
                     else:
                         listatrr = self.structure[attribute]
                         for atrr in listatrr:
                           # Nc in the formula
                           numOfShowes = len(self.train[(self.train[attribute] == atrr) & (self.train[self.train.columns[-1]] == key)])
                           # calculate the formula
-                          result = float(numOfShowes + self.m * float(1.0 / listatrr.__len__())) / float(value[0] + self.m)
+                          mone = float( numOfShowes+ float(self.m * float(1.0 / listatrr.__len__())))
+                          mechane = float(value[0] + self.m)
+                          result = mone / mechane
                           # add the result to the table
-                          self.attrPro.loc[len(self.attrPro)] = [key, attribute, atrr, result]
+                          attrProbabality[attribute][atrr] = result
+            self.atrrProDic[key] = attrProbabality
         i=0
 
     # Naive bayes calculation
@@ -70,25 +75,21 @@ class Classifier:
                 multiplier = float(1)
                 for key, value in test.iteritems():
                     if key != "class":
-                        probabiRow = self.attrPro[(self.attrPro['classValue'] == classKey) & (self.attrPro['Attribute'] == key) & (self.attrPro['AttributeValue'] == value[index])]['Probability']
-                        if probabiRow.empty:
-                            probability = int(0)
-                        else:
-                            probability =float(probabiRow.values[0])
+                        probability = self.atrrProDic[classKey][key][value[index]]
                         multiplier = float(multiplier) * float(probability)
                 # Calculate P(Ci)*P(X | Ci)
                 classProb = float(multiplier) * float(classValue[1])
                 classProbList[classKey] = float(classProb)
             # classify the record according to the max probability
             maxProb = max(classProbList.iteritems(), key=operator.itemgetter(1))[0]
-            self.writeToFile(maxProb, index + 1)
+            self.writeToFile(index + 1, maxProb)
             self.classification_results.append(maxProb)
-        print self.get_accuracy()
+        self.get_accuracy()
 
     # Write results to file
-    def writeToFile(self, classify, index):
+    def writeToFile(self, index, classify):
         text_file = open(self.path + "/Output.txt", "a")
-        text_file.write('%d %s \n' %(index, classify))
+        text_file.write('%d %s\n' % (index, classify))
         text_file.close()
 
     # returns algorithm's accuracy
@@ -100,7 +101,8 @@ class Classifier:
             if test_class[i] == classifier_class[i]:
                 hits = hits + 1
         accuracy = "%.3f" % ((float(hits) / float(self.classification_results.__len__())) * 100)
-        return accuracy
+        print (accuracy)
+
 
 
 

@@ -217,4 +217,3 @@ root = Tk()
 my_gui = NaiveBayesClassifier(root)
 root.mainloop()
 
-
