@@ -16,7 +16,6 @@ class NaiveBayesClassifier:
     train = None
     test = None
     structureFile = None
-    discBins = {}
     wasBuilt = False
     structureDic = {}
     fileHandler = None
@@ -96,7 +95,7 @@ class NaiveBayesClassifier:
                 self.classifier = Classifier(self.train, self.entryPath.get(), self.structureDic, self.numOfBins)
                 self.wasBuilt = True
                 tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
-        except Exception, e:
+        except Exception as e:
             tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     # Clasify button was clicked
@@ -111,7 +110,7 @@ class NaiveBayesClassifier:
             tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
          else:
             tkMessageBox.showinfo("Error Message", "Please build before Classifying")
-     except Exception, e:
+     except Exception as e:
          tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     # Trnasfer dataset to lowercase
@@ -153,21 +152,22 @@ class NaiveBayesClassifier:
 
     # Reset global variables
     def reset(self):
-        # reseet data members
+        # reset data members
+        self.classifier.reset()
+        self.dataCleaner.reset()
         self.master = None
         self.filePath = ""
         self.numOfBins = 0
         self.train = None
         self.test = None
         self.structureFile = None
-        self.classifier.reset()
-        self.classifier = None
-        self.discBins = {}
+        self.wasBuilt = False
         self.structureDic = {}
         self.fileHandler = None
-        self.dataCleaner.reset()
+        self.classifier = None
         self.dataCleaner = None
-        self.wasBuilt = False
+
+
 
 
 

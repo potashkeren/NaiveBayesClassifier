@@ -66,5 +66,6 @@ class DataCleaner:
         self.discBins[attributeName] = break_points
 
     def reset(self):
+        self.discBins = {}
         self.structureDic = dict()
-        self.discBins= {}
+        self.numOfBins = 0

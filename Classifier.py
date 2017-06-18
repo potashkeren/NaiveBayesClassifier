@@ -66,7 +66,7 @@ class Classifier:
 
     # Naive bayes calculation
     def classify(self, test):
-
+        self.classification_results = []
         self.testDF = test
         text_file = open(self.path + "/Output.txt", "w")
 
@@ -103,11 +103,16 @@ class Classifier:
         print (accuracy)
 
     def reset(self):
+        self.train = None
+        self.testDF = None
         self.classification_results = []
         self.structure = []
+        self.m = 2
         self.classesData = {}
         self.atrrProDic = dict()
         self.testClassified = {}
+        self.path = ""
+        self.numOfBins = 0
 
 
 
