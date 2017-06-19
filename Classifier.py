@@ -15,12 +15,10 @@ class Classifier:
     classesData = {}
     # table for the pre-processing, calculate all the train file probability
     atrrProDic = dict()
-    testClassified = {}
     path = ""
     numOfBins = 0
 
     def __init__(self, testFile, pathFiles, structure,numOfBins):
-        self.reset()
         self.train = testFile
         self.path = pathFiles
         self.structure = structure
@@ -102,18 +100,6 @@ class Classifier:
                 hits = hits + 1
         accuracy = "%.3f" % ((float(hits) / float(self.classification_results.__len__())) * 100)
         print (accuracy)
-
-    def reset(self):
-        self.train = None
-        self.testDF = None
-        self.classification_results = []
-        self.structure = []
-        self.m = 2
-        self.classesData = {}
-        self.atrrProDic = {}
-        self.testClassified = {}
-        self.path = ""
-        self.numOfBins = 0
 
 
 

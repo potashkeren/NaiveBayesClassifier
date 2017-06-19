@@ -8,7 +8,6 @@ class DataCleaner:
     numOfBins = 0
 
     def __init__(self, structure, bins):
-        self.reset()
         self.structureDic = structure
         self.numOfBins = bins
 
@@ -26,7 +25,8 @@ class DataCleaner:
     def fillMissingValues(self, train):
         for attribute in self.structureDic:
             if self.structureDic[attribute] == "NUMERIC":
-                train[attribute].fillna(float(train[attribute].mean()), inplace=True)
+                for val in self.structureDic["class"]:
+                    train.loc[(train["class"] == val) & train[attribute].isnull(), attribute] = train.loc[(train["class"] == val, attribute)].mean()
             elif attribute != "class":
                 train[attribute].fillna(train[attribute].mode()[0], inplace=True)
         return train
@@ -66,7 +66,5 @@ class DataCleaner:
         break_points = [-float("inf")] + cut_points + [float("inf")]
         self.discBins[attributeName] = break_points
 
-    def reset(self):
-        self.discBins = {}
-        self.structureDic = dict()
-        self.numOfBins = 0
+
+

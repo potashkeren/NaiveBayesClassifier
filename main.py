@@ -5,6 +5,7 @@ import tkMessageBox
 from Classifier import *
 from FilesHandler import *
 from DataCleaner import *
+import os
 
 
 class NaiveBayesClassifier:
@@ -24,7 +25,6 @@ class NaiveBayesClassifier:
 
     # Initialize the GUI
     def __init__(self, master):
-
         self.master = master
         master.title("Naive Bayes Classifier")
         master.geometry("650x300")
@@ -82,10 +82,12 @@ class NaiveBayesClassifier:
 
     # Build button was clicked
     def build(self):
-        try:
+        #try:
             self.train = pd.read_csv(self.entryPath.get() + "/train.csv")
             if self.validate(self.entryDiscBins.get()):
                 # load train file, test file and structure file
+                if (os.path.getsize(self.entryPath.get() + "/Structure.txt") == 0):
+                    raise Exception("The structure file is empty")
                 self.structureFile = open(self.entryPath.get() + "/Structure.txt")
                 self.fileHandler = FilesHandler()
                 self.structureDic = self.fileHandler.createStstructureDic(self.structureFile)
@@ -95,8 +97,8 @@ class NaiveBayesClassifier:
                 self.classifier = Classifier(self.train, self.entryPath.get(), self.structureDic, self.numOfBins)
                 self.wasBuilt = True
                 tkMessageBox.showinfo("Build Message", "Building classifier using train-set is done!")
-        except Exception as e:
-            tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
+        #except Exception as e:
+        #   tkMessageBox.showinfo("Error Message", "Something went wrong:\n" + str(e))
 
     # Clasify button was clicked
     def classify(self):
@@ -106,8 +108,8 @@ class NaiveBayesClassifier:
             self.toLowerCase("test")
             self.test = self.dataCleaner.testCleaning(self.test)
             self.classifier.classify(self.test)
-            self.reset()
             tkMessageBox.showinfo("Classify Message", "Classifying the test-set to the chosen path is done!")
+            sys.exit(0)
          else:
             tkMessageBox.showinfo("Error Message", "Please build before Classifying")
      except Exception as e:
@@ -149,26 +151,6 @@ class NaiveBayesClassifier:
 
         except ValueError:
             self.labelErr['text'] = "Invalid input - Please enter a number"
-
-    # Reset global variables
-    def reset(self):
-        # reset data members
-        self.classifier.reset()
-        self.dataCleaner.reset()
-        self.master = None
-        self.filePath = ""
-        self.numOfBins = 0
-        self.train = None
-        self.test = None
-        self.structureFile = None
-        self.wasBuilt = False
-        self.structureDic = {}
-        self.fileHandler = None
-        self.classifier = None
-        self.dataCleaner = None
-
-
-
 
 
 root = Tk()
