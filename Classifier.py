@@ -20,6 +20,7 @@ class Classifier:
     numOfBins = 0
 
     def __init__(self, testFile, pathFiles, structure,numOfBins):
+        self.reset()
         self.train = testFile
         self.path = pathFiles
         self.structure = structure
@@ -66,7 +67,7 @@ class Classifier:
 
     # Naive bayes calculation
     def classify(self, test):
-        self.classification_results = []
+        # self.classification_results = []
         self.testDF = test
         text_file = open(self.path + "/Output.txt", "w")
 
@@ -109,7 +110,7 @@ class Classifier:
         self.structure = []
         self.m = 2
         self.classesData = {}
-        self.atrrProDic = dict()
+        self.atrrProDic = {}
         self.testClassified = {}
         self.path = ""
         self.numOfBins = 0

@@ -8,6 +8,7 @@ class DataCleaner:
     numOfBins = 0
 
     def __init__(self, structure, bins):
+        self.reset()
         self.structureDic = structure
         self.numOfBins = bins
 
